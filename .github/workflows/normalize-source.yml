@@ -1,0 +1,149 @@
+name: Normalize Android source
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/normalize-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Odtworz i sprawdz źródła
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "ap.zip.b64" ]; then
+            echo "Źródła są już znormalizowane — brak ap.zip.b64."
+            exit 0
+          fi
+
+          python - <<'PY'
+          import base64
+          from pathlib import Path
+
+          src = Path("ap.zip.b64")
+          dst = Path("/tmp/przewijak-stage3.zip")
+          dst.write_bytes(base64.b64decode(src.read_text().strip()))
+          print("Odtworzono:", dst, dst.stat().st_size, "bytes")
+          PY
+
+          unzip -tq /tmp/przewijak-stage3.zip
+          rm -rf /tmp/przewijak-source
+          mkdir -p /tmp/przewijak-source
+          unzip -q /tmp/przewijak-stage3.zip -d /tmp/przewijak-source
+
+          SETTINGS_FILE="$(find /tmp/przewijak-source -name settings.gradle.kts -print -quit)"
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "BLAD: Brak settings.gradle.kts w archiwum"
+            exit 1
+          fi
+
+          PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
+
+          test -f "$PROJECT_DIR/SELFTEST_PHONE_STAGE3.py"
+          test -f "$PROJECT_DIR/app/build.gradle.kts"
+          test -f "$PROJECT_DIR/app/src/main/AndroidManifest.xml"
+          test -f "$PROJECT_DIR/app/src/main/java/pl/przewijak/live/MainActivity.kt"
+          test -f "$PROJECT_DIR/app/src/main/python/live_core.py"
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Źródło do migracji: $PROJECT_DIR"
+
+      - name: Zainstaluj normalną strukturę projektu
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "ap.zip.b64" ]; then
+            exit 0
+          fi
+
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name '.git' \
+            ! -name '.github' \
+            -exec rm -rf {} +
+
+          cp -a "$PROJECT_DIR"/. .
+
+          rm -f ap.zip.b64
+          rm -rf .gradle build app/build
+          find . -type d -name '__pycache__' -prune -exec rm -rf {} +
+          find . -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
+
+          cat > .gitignore <<'EOF'
+          .gradle/
+          build/
+          **/build/
+          local.properties
+          *.iml
+          .idea/
+          __pycache__/
+          *.py[cod]
+          *.log
+          cloud-output/
+          EOF
+
+          cat > README.md <<'EOF'
+          # Przewijak PHONE Stage 3
+
+          Normalne repozytorium projektu Android używanego do budowy Przewijak_PHONE_STAGE3.apk.
+
+          ## Budowanie
+
+          GitHub Actions uruchamia .github/workflows/build-apk.yml po każdym pushu do main oraz ręcznie.
+
+          Projekt korzysta z:
+          - Java 17
+          - Android SDK 35
+          - Gradle 8.9
+          - Python 3.10 / Chaquopy
+
+          Przed kompilacją uruchamiany jest SELFTEST_PHONE_STAGE3.py.
+
+          ## Pochodzenie
+
+          Źródła zostały odtworzone 1:1 z paczki użytej w poprawnym buildzie Stage 3, a następnie rozłożone do normalnej struktury repozytorium. Stary ap.zip.b64 został usunięty z main.
+
+          Punkt cofnięcia sprzed migracji: backup/pre-normalize-20261007.
+          EOF
+
+          git status --short
+
+      - name: Zapisz migrację
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "settings.gradle.kts" ]; then
+            echo "BLAD: Migracja nie utworzyła projektu w katalogu głównym"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Brak zmian do zapisania."
+            exit 0
+          fi
+
+          git commit -m "Normalize Android source tree"
+          git push origin HEAD:main
