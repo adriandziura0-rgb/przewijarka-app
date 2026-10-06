@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Przewijak LIVE — PHONE ETAP 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div><div class="eyebrow">ANDROID / PHONE • ETAP 3 • RDZEŃ 2.9.16 ZAMROŻONY</div><h1>Przewijak LIVE</h1></div>
+  <div id="connPill" class="pill warn">START</div>
+</header>
+<main>
+<section id="tab-live" class="tab active">
+  <div class="card stagecard">
+    <div class="sectionhead"><div><div class="cardtitle">📱 PHONE — COLLECTOR + ZAPIS ANDROID</div><div class="muted micro">bez Termuxa • RDZEŃ Python w APK • WebView ↔ heartbeat/ACK ↔ SQLite</div></div><span class="frozenbadge">CLEAN</span></div>
+    <div id="stageState" class="collectorhint good">Etap 3 zachowuje collector Android i dodaje systemowy wybór folderu oraz bezpieczny eksport, również na kartę SD.</div>
+    <div class="stagegrid">
+      <div><b class="stageok">✓ RDZEŃ 2.9.16</b><span>ten sam live_engine / MASTER / SQLite</span></div>
+      <div><b class="stageok">✓ COLLECTOR</b><span>osobne WebView dla aktywnych źródeł</span></div>
+      <div><b class="stageok">✓ HEARTBEAT + ACK</b><span>kolejka collector.js trafia do RDZENIA</span></div>
+      <div><b class="stageok">✓ FOLDER / SD</b><span>Android Storage Access Framework + trwałe uprawnienie</span></div>
+    </div>
+  </div>
+
+  <div class="hero card">
+    <div class="statusrow"><span id="engineDot" class="dot"></span><strong id="engineState">SILNIK ZATRZYMANY</strong><span id="sessionName" class="muted"></span></div>
+    <div id="collectorHint" class="collectorhint">Najpierw wpisz adresy stron LIVE i włącz źródła, potem uruchom silnik i collector.</div>
+    <div class="bigactions"><button id="startEngine" class="btn primary">▶ START SILNIKA</button><button id="stopEngine" class="btn danger">■ STOP SILNIKA</button></div>
+    <div class="grid4 metrics">
+      <div><b id="mMatches">0</b><span>mecze</span></div><div><b id="mGoals">0</b><span>gole</span></div><div><b id="mChanges">0</b><span>zmiany</span></div><div><b id="mAnom">0</b><span>anom.</span></div>
+    </div>
+    <button id="nightMode" class="btn secondary full nightmode">☀️ EKRAN MAX — NIE WYGASZAJ</button>
+    <div id="nightHint" class="muted micro nighthint">Etap 3 nadal testujemy na pierwszym planie. Pełna praca przy zgaszonym ekranie będzie kolejnym etapem.</div>
+  </div>
+
+  <div class="card sourceconfigcard">
+    <div class="sectionhead"><div><div class="cardtitle">Źródła LIVE</div><div class="muted micro">nie wchodzi automatycznie w pojedynczy mecz • nie rotuje stron • każdy WebView ma własny profil</div></div></div>
+    <div id="profileList" class="profilelist"></div>
+    <button id="saveProfiles" class="btn primary full">ZAPISZ ŹRÓDŁA</button>
+    <div id="profileResult" class="result muted">Wklej adres strony LIVE/listy eSoccer. Puste źródło pozostaje wyłączone.</div>
+  </div>
+
+  <div class="card collectorcard">
+    <div class="cardtitle">Android Browser Collector</div>
+    <div id="browserState" class="collectorhint">Zatrzymany.</div>
+    <div class="sourceactions"><button id="startCollector" class="btn primary mini">▶ URUCHOM COLLECTOR</button><button id="stopCollector" class="btn danger mini">■ ZATRZYMAJ</button><button id="reinjectCollector" class="btn secondary mini">↻ WSTRZYKNIJ PONOWNIE</button></div>
+    <div id="sourceRuntime" class="sourcelist"></div>
+  </div>
+
+  <div class="card datacard"><div class="sectionhead"><div><div class="cardtitle">Aktualne mecze</div><div class="muted micro">dane zaakceptowane przez zamrożony RDZEŃ</div></div></div><div id="matches" class="matchlist"><div class="empty">Brak danych.</div></div></div>
+</section>
+
+<section id="tab-intel" class="tab">
+  <div class="card intelhero"><div class="sectionhead"><div><div class="cardtitle">🧠 WARSTWA INTELIGENTNA</div><div class="muted micro">celowo nieuruchomiona w Etapie 3 PHONE</div></div><span class="frozenbadge">RDZEŃ ZAMROŻONY</span></div><div class="result muted">Najpierw stabilizujemy collector i zapis Android. Obserwator DOM i uczenie między źródłami pozostają odseparowane.</div></div>
+</section>
+
+<section id="tab-files" class="tab">
+  <div class="card">
+    <div class="cardtitle">Pliki i karta SD</div>
+    <div class="pathbox" id="outputPath">Pamięć prywatna aplikacji — brak folderu eksportu</div>
+    <div id="storageBadge" class="collectorhint">Wybierz folder docelowy. Może to być katalog w pamięci telefonu albo na karcie SD.</div>
+    <button id="chooseFolder" class="btn primary full">📁 WYBIERZ FOLDER / KARTĘ SD</button>
+    <button id="exportNow" class="btn secondary full">⬇ EKSPORTUJ TERAZ</button>
+    <label class="switchrow"><span>Automatyczny eksport po STOP SILNIKA</span><input id="autoExport" type="checkbox" checked></label>
+    <button id="clearFolder" class="mini wide">USUŃ WYBRANY FOLDER</button>
+    <div id="storageResult" class="result muted">Główna baza SQLite pozostaje bezpiecznie w pamięci prywatnej aplikacji. Do wybranego folderu trafia spójny snapshot bazy oraz pliki eksportu.</div>
+  </div>
+</section>
+
+<section id="tab-settings" class="tab">
+  <div class="card"><div class="cardtitle">Ustawienia telefonu</div><label>Zapis stanu co <span id="snapVal">5</span> s</label><input id="snapRange" type="range" min="1" max="20" step="1" value="5"><label class="switchrow"><span>Rejestruj każdą zmianę kursu</span><input id="oddsToggle" type="checkbox"></label><button id="saveConfig" class="btn primary full">ZAPISZ USTAWIENIA</button><button id="openDevSettings" class="mini wide">⚙ USTAWIENIA APLIKACJI ANDROID</button><div id="settingsResult" class="result muted">Ustawienia są zapisywane lokalnie.</div></div>
+  <div class="card warning"><div class="cardtitle">Zakres Etapu 3</div><p>Folder/SD i eksport są już częścią aplikacji. Collector nadal działa w aktywnej aplikacji; wielogodzinna praca w tle i testy soak to następny etap.</p></div>
+</section>
+</main>
+<nav class="bottomnav"><button data-tab="live" class="active"><span>●</span>NA ŻYWO</button><button data-tab="intel"><span>🧠</span>ANALIZA</button><button data-tab="files"><span>▣</span>PLIKI</button><button data-tab="settings"><span>⚙</span>USTAWIENIA</button></nav>
+<script src="app.js"></script>
+</body></html>

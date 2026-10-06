@@ -1,0 +1,7 @@
+# CORE 2.9.16 FROZEN — SHA256
+# Te pliki pochodzą bez zmian z wydania 2.9.16 SOAK REFINEMENT CLEAN.
+3bfdc6c03a2cb98305a1ff346d43bde73bde4163a81a9719dc4c2885c359912f  live_core.py
+f0be6fc36aed9e10b7739b5d0e1c8aaa0cf9e6829aec88e3bcb5c2cb5fd8142f  live_database.py
+c41446bb0bfc4041f111085d78a7478f08b5d6c4c68dbe35c0f7b8f274c42e50  live_engine.py
+79dffc2ac9ab2badfc7e94fa8db20d52fb581cb0eeaf9c33789732e124e33a41  integrated_browser.py
+3b68c16559e97eb80cf901a8a640f4284d2125969931b2d992005569b9b7abb1  web/collector.js

@@ -1,0 +1,43 @@
+PRZEWIJAK LIVE — PHONE ETAP 3
+
+CO JEST GOTOWE:
+- natywny projekt Android, bez Termuxa i bez localhost,
+- RDZEŃ 2.9.16 działa wewnątrz aplikacji przez Chaquopy,
+- collector Android z osobnymi WebView dla Fortuna / Superbet / Betcris,
+- heartbeat + ACK + ingest -> RDZEŃ -> SQLite,
+- systemowy wybór folderu Android (Storage Access Framework),
+- trwałe uprawnienie do wybranego folderu po ponownym uruchomieniu aplikacji,
+- możliwość wybrania katalogu na karcie SD,
+- ręczny EKSPORTUJ TERAZ,
+- automatyczny eksport po STOP SILNIKA,
+- eksport używa spójnego snapshotu SQLite; główna baza nadal pracuje w prywatnej pamięci aplikacji,
+- aplikacja NIE wchodzi sama w pojedynczy mecz i NIE rotuje źródeł.
+
+JAK DZIAŁA ZAPIS:
+1. Główna baza `database/przewijak.sqlite3` pozostaje w prywatnej pamięci aplikacji.
+2. W zakładce PLIKI wybierasz systemowym oknem dowolny folder telefonu lub karty SD.
+3. Aplikacja zapamiętuje uprawnienie do tego folderu.
+4. EKSPORTUJ TERAZ tworzy spójny snapshot SQLite oraz kopiuje pliki eksportu do:
+   <wybrany folder>/PrzewijakLIVE/
+5. Domyślnie po STOP SILNIKA wykonywany jest także automatyczny eksport.
+
+WAŻNE:
+- ETAP 3 nadal testujemy na pierwszym planie.
+- Pełna praca przy zgaszonym ekranie / foreground service będzie ETAPEM 4.
+- Observer DOM pozostaje wyłączony i odseparowany.
+- Nie uruchamiaj tej paczki poleceniem `python app.py`.
+
+JAK ZBUDOWAĆ APK:
+1. Na komputerze z Android Studio rozpakuj ZIP.
+2. Otwórz folder projektu.
+3. Poczekaj na synchronizację Gradle.
+4. Build -> Build APK(s).
+5. Zainstaluj APK na telefonie.
+
+TEST ETAPU 3 NA TELEFONIE:
+1. Otwórz PLIKI.
+2. Kliknij WYBIERZ FOLDER / KARTĘ SD.
+3. Wybierz rzeczywisty katalog na karcie SD i zatwierdź.
+4. Kliknij EKSPORTUJ TERAZ.
+5. Sprawdź czy powstał katalog PrzewijakLIVE z EXPORT_MANIFEST.json i database/przewijak.sqlite3.
+6. Zamknij i uruchom aplikację ponownie — wybrany folder powinien nadal być pamiętany.

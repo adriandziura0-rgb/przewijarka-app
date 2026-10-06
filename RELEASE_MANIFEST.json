@@ -1,0 +1,27 @@
+{
+  "release_id": "PHONE_STAGE3_STORAGE_SD_CLEAN",
+  "version": "PHONE-3.0.0-stage3",
+  "base": "PHONE_STAGE2_ANDROID_COLLECTOR_CORE_CLEAN",
+  "core_version": "2.9.16 FROZEN",
+  "features": [
+    "Chaquopy Python core",
+    "Android multi-WebView collector",
+    "collector.js native bridge",
+    "heartbeat ACK ingest",
+    "source profiles",
+    "Android Storage Access Framework folder picker",
+    "persistable folder permission",
+    "SD-card capable export destination",
+    "consistent SQLite online backup snapshot",
+    "manual export",
+    "automatic export on engine stop"
+  ],
+  "not_yet": [
+    "foreground service/background guarantee",
+    "long soak validation",
+    "DOM Observer Android",
+    "cross-source intelligence stage3"
+  ],
+  "build_tested_in_android_sdk": false,
+  "host_selftest": "SELFTEST_PHONE_STAGE3.py"
+}
