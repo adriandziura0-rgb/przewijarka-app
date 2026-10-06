@@ -18,37 +18,46 @@ jobs:
       - name: Pobierz repozytorium
         uses: actions/checkout@v4
 
-      - name: Odtworz ap.zip
+      - name: Wybierz źródło projektu
         shell: bash
         run: |
-          python - <<'PY'
-          import base64, pathlib
-          src = pathlib.Path("ap.zip.b64")
-          dst = pathlib.Path("ap.zip")
+          set -euo pipefail
+
+          if [ -f "settings.gradle.kts" ]; then
+            PROJECT_DIR="$GITHUB_WORKSPACE"
+            echo "Budowa z normalnych źródeł w repozytorium."
+          elif [ -f "ap.zip.b64" ]; then
+            echo "Tryb zgodności: odtwarzam projekt z ap.zip.b64."
+            rm -rf "$RUNNER_TEMP/przewijak-stage3"
+            mkdir -p "$RUNNER_TEMP/przewijak-stage3"
+
+            python - <<'PY'
+          import base64
+          from pathlib import Path
+
+          src = Path("ap.zip.b64")
+          dst = Path("/tmp/przewijak-stage3.zip")
           dst.write_bytes(base64.b64decode(src.read_text().strip()))
           print("ap.zip:", dst.stat().st_size, "bytes")
           PY
-          test -s ap.zip
-          unzip -tq ap.zip
 
-      - name: Rozpakuj ap.zip
-        shell: bash
-        run: |
-          rm -rf unpacked
-          mkdir -p unpacked
-          unzip -q ap.zip -d unpacked
+            unzip -tq /tmp/przewijak-stage3.zip
+            unzip -q /tmp/przewijak-stage3.zip -d "$RUNNER_TEMP/przewijak-stage3"
 
-          SETTINGS_FILE="$(find unpacked -name settings.gradle.kts -print -quit)"
+            SETTINGS_FILE="$(find "$RUNNER_TEMP/przewijak-stage3" -name settings.gradle.kts -print -quit)"
+            if [ -z "$SETTINGS_FILE" ]; then
+              echo "BLAD: Nie znaleziono settings.gradle.kts"
+              exit 1
+            fi
 
-          if [ -z "$SETTINGS_FILE" ]; then
-            echo "BLAD: Nie znaleziono settings.gradle.kts w ap.zip"
+            PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
+          else
+            echo "BLAD: Brak normalnych źródeł i brak ap.zip.b64"
             exit 1
           fi
 
-          PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
-
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          echo "Projekt znaleziony: $PROJECT_DIR"
+          echo "Projekt: $PROJECT_DIR"
 
       - name: Java 17
         uses: actions/setup-java@v4
@@ -61,18 +70,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Sprawdz Python 3.10
-        shell: bash
-        run: |
-          python --version
-          python3 --version
-          python3.10 --version
-          which python
-          which python3.10
-
       - name: Przygotuj Android SDK 35
         shell: bash
         run: |
+          set -euo pipefail
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
 
           if [ ! -x "$SDKMANAGER" ]; then
@@ -84,11 +85,11 @@ jobs:
             exit 1
           fi
 
-          echo "sdkmanager: $SDKMANAGER"
-
           yes | "$SDKMANAGER" --licenses >/dev/null || true
-
-          "$SDKMANAGER"             "platform-tools"             "platforms;android-35"             "build-tools;35.0.0"
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
@@ -98,38 +99,33 @@ jobs:
       - name: Diagnostyka
         shell: bash
         run: |
+          set -euo pipefail
           java -version
           python3.10 --version
           gradle --version
           echo "PROJECT_DIR=$PROJECT_DIR"
-          ls -la "$PROJECT_DIR"
+          test -f "$PROJECT_DIR/settings.gradle.kts"
+          test -f "$PROJECT_DIR/SELFTEST_PHONE_STAGE3.py"
+          test -f "$PROJECT_DIR/app/src/main/AndroidManifest.xml"
 
       - name: Self-test
         shell: bash
         run: |
+          set -euo pipefail
           cd "$PROJECT_DIR"
-
-          if [ ! -f "SELFTEST_PHONE_STAGE3.py" ]; then
-            echo "BLAD: Brak SELFTEST_PHONE_STAGE3.py"
-            exit 1
-          fi
-
           python3.10 SELFTEST_PHONE_STAGE3.py
 
       - name: Zbuduj APK
         shell: bash
         run: |
+          set -euo pipefail
           cd "$PROJECT_DIR"
-
-          echo "Python dla Chaquopy:"
-          python3.10 --version
-          which python3.10
-
-          gradle             --no-daemon             --stacktrace             :app:assembleDebug
+          gradle --no-daemon --stacktrace :app:assembleDebug
 
       - name: Sprawdz APK
         shell: bash
         run: |
+          set -euo pipefail
           APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
 
           if [ ! -f "$APK" ]; then
@@ -138,19 +134,19 @@ jobs:
             exit 1
           fi
 
-          echo "APK GOTOWE:"
           ls -lh "$APK"
 
       - name: Przygotuj APK
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p cloud-output
-
-          cp             "$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"             cloud-output/Przewijak_PHONE_STAGE3.apk
-
-          sha256sum             cloud-output/Przewijak_PHONE_STAGE3.apk             > cloud-output/Przewijak_PHONE_STAGE3.apk.sha256.txt
-
-          ls -lh cloud-output/
+          cp \
+            "$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk" \
+            cloud-output/Przewijak_PHONE_STAGE3.apk
+          sha256sum \
+            cloud-output/Przewijak_PHONE_STAGE3.apk \
+            > cloud-output/Przewijak_PHONE_STAGE3.apk.sha256.txt
 
       - name: Udostepnij APK
         uses: actions/upload-artifact@v4
